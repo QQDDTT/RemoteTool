@@ -12,6 +12,7 @@ try{
     if(Test-Item $Xml_Path) {
         [String]$LogPath = "LOG_PATH" | Read-Xml -Path $Xml_Path
         [String]$LogName = "LOG_NAME" | Read-Xml -Path $Xml_Path
+        [String]$WorkSpace = "WORK_PACE" | Read-Xml -Path $Xml_Path
         [String]$Test1 = "TEST_FILE_1" | Read-Xml -Path $Xml_Path
         [String]$Test2 = "TEST_FILE_2" | Read-Xml -Path $Xml_Path
         [String]$Test3 = "TEST_FILE_3" | Read-Xml -Path $Xml_Path
@@ -23,7 +24,41 @@ try{
     }
 
     $LogFullPath = Join-Path $LogPath $LogName
+    $Path1 = Join-Path $WorkSpace $Test1
+    $Path2 = Join-Path $WorkSpace $Test2
+    $Path3 = Join-Path $WorkSpace $Test3
+    if (Test-Path $Path1) {
+        Add-Content -Path $Path1 -Value "*** LIST 1 ***"
+        $List1 | ForEach-Object {
+            Add-Content -Path $Path1 -Value $_
+        }
+    } else {
+        $result = 1
+        "$Path1 NOT FOUND" | Add-Log -W -Path $LogFullPathg
+    }
+    if (Test-Path $Path2) {
+        Add-Content -Path $Path2 -Value "*** LIST 2 ***"
+        $List2 | ForEach-Object {
+            Add-Content -Path $Path2 -Value $_
+        }
+    } else {
+        $result = 1
+        "$Path2 NOT FOUND" | Add-Log -W -Path $LogFullPathg
+    }
+    if (Test-Path $Path3) {
+        Add-Content -Path $Path3 -Value "*** LIST 1 & 2 ***"
+        $List1 | ForEach-Object {
+            Add-Content -Path $Path3 -Value $_
+        }
+        $List2 | ForEach-Object {
+            Add-Content -Path $Path3 -Value $_
+        }
+    } else {
+        $result = 1
+        "$Path3 NOT FOUND" | Add-Log -W -Path $LogFullPathg
+    }
 } catch {
+    $result = 5
     "ERROR $_.Exception.Message" | Add-Log -E -Path $LogFullPath
 } finally {
     switch ($result) {
@@ -41,3 +76,4 @@ try{
         }
     }
 }
+return $result

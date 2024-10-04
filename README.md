@@ -22,7 +22,7 @@ SimulationTest 模拟测试
 ## 环境要求
 
 windows
-PowerShell 3.0＋
+PowerShell 5+
 
 ## 安装和构建
 
