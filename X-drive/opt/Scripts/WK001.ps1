@@ -1,6 +1,3 @@
-$script_path = $MyInvocation.MyCommand.Definition
-$parent_path = Split-Path -Path $script_path
-
 Import-Module "$PSScriptRoot\Common\LogOutput.psm1"
 Import-Module "$PSScriptRoot\Common\XmlRead.psm1"
 
