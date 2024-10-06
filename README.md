@@ -9,7 +9,7 @@ REMOTE TOOL
 LogOutput 日志输出工具
 XmlRead xml查询工具
 PerformanceTest 性能测试
-SimulationTest 模拟测试
+SimulationTest 模拟测试 (building...)
 
 ## 项目结构
 
