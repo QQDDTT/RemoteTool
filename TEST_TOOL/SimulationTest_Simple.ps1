@@ -1,4 +1,4 @@
-function SimulationSimpleTest {
+function Global:SimulationSimpleTest {
     param(
         [Parameter(ValueFromPipeline = $true)][ScriptBlock]$SimulationBlock,
         [String[]]$T,
@@ -6,157 +6,170 @@ function SimulationSimpleTest {
     )
     process {
         try {
-            Write-Output "SimulationTest - Simple start."
+            Write-Output "---> SimulationTest - Simple start."
             if ($null -eq $T -or $null -eq $V) {
-                Write-Error "TruePaths or VirtualPaths cannot be null."
+                Write-Error "---> TruePaths or VirtualPaths cannot be null."
                 return
             }
             if ($T.Length -eq 0 -or $V.Length -eq 0) {
-                Write-Error "TruePaths or VirtualPaths length must be greater than 0."
+                Write-Error "---> TruePaths or VirtualPaths length must be greater than 0."
                 return
             }
             if ($T.Length -ne $V.Length) {
-                Write-Error "TruePaths and VirtualPaths must be of equal length."
+                Write-Error "---> TruePaths and VirtualPaths must be of equal length."
                 return
             }
         
             foreach ($path in $T) {
                 if (-not (Test-Path -Path $path)) {
-                    Write-Error "$path is not a valid path."
+                    Write-Error "---> $path is not a valid path."
                     return
                 }
             }
             
             if (-not $SimulationBlock) {
-                Write-Error "SimulationBlock cannot be null or empty."
+                Write-Error "---> SimulationBlock cannot be null or empty."
                 return
             }
-            $originalTestPath = Get-Command Test-Path
-            $originalGetContent = Get-Command Get-Content
-            $originalSetContent = Get-Command Set-Content
-            $originalAddContent = Get-Command Add-Content
-            $originalClearContent = Get-Command Clear-Content
-            $originalRemoveItem = Get-Command Remove-Item
-            $originalCopyItem = Get-Command Copy-Item
-            $originalMoveItem = Get-Command Move-Item
-            $originalNewItem = Get-Command New-Item
-            $originalGetChildItem = Get-Command Get-ChildItem
-            $originalSetlocation = Get-Command Set-Location
-            $originalGetItem = Get-Command Get-Item
-            $originalGetItemProperty = Get-Command Get-ItemProperty
-            $originalOutFile = Get-Command Out-File
-            $originalExportCsv = Get-Command Export-Csv
-            $originalImportCsv = Get-Command Import-Csv
-            $originalImportModule = Get-Command Import-Module
+            $Global:originalTestPath = Get-Command Test-Path
+            $Global:originalJoinPath = Get-Command Join-Path
+            $Global:originalGetContent = Get-Command Get-Content
+            $Global:originalSetContent = Get-Command Set-Content
+            $Global:originalAddContent = Get-Command Add-Content
+            $Global:originalClearContent = Get-Command Clear-Content
+            $Global:originalRemoveItem = Get-Command Remove-Item
+            $Global:originalCopyItem = Get-Command Copy-Item
+            $Global:originalMoveItem = Get-Command Move-Item
+            $Global:originalNewItem = Get-Command New-Item
+            $Global:originalGetItem = Get-Command Get-Item
+            $Global:originalGetItemProperty = Get-Command Get-ItemProperty
+            $Global:originalGetChildItem = Get-Command Get-ChildItem
+            $Global:originalSetlocation = Get-Command Set-Location
+            $Global:originalOutFile = Get-Command Out-File
+            $Global:originalExportCsv = Get-Command Export-Csv
+            $Global:originalImportCsv = Get-Command Import-Csv
+            $Global:originalImportModule = Get-Command Import-Module
 
-            $originalAddLog = ${function:Add-Log}
-            $originalReadXml = ${function:Read-Xml}
+            $Global:originalAddLog = ${function:Add_Log}
+            $Global:originalAddFile = ${function:Add_File}
+            $Global:originalReadXml = ${function:Read_Xml}
 
-            Write-Output "SimulationTest command extraction is successful."
+            Write-Output "---> SimulationTest command extraction is successful."
 
             # 替换原始命令
             Set-Item -Path Function:Test-Path -Value {
-                param([String[]]$Path)
-                & $ProxyTestPath -Path $Path -OriginalCommand $originalTestPath
+                param([Parameter(ValueFromPipeline = $true)][String[]]$Path)
+                & $ProxyTestPath -Path $Path -OriginalCommand $Global:originalTestPath
+            }
+            Set-Item -Path Function:Join-Path -Value {
+                param([String[]]$Path, [String]$ChildPath)
+                & $ProxyJoinPath -Path $Path -ChildPath $ChildPath -OriginalCommand $Global:originalJoinPath
             }
             Set-Item -Path Function:Get-Content -Value {
-                param([String[]]$Path)
-                & $ProxyGetContent -Path $Path -OriginalCommand $originalGetContent
+                param([Parameter(ValueFromPipeline = $true)][String[]]$Path)
+                & $ProxyGetContent -Path $Path -OriginalCommand $Global:originalGetContent
             }
             Set-Item -Path Function:Set-Content -Value {
-                param([String[]]$Path, [Object[]]$Value)
-                & $ProxySetContent -Path $Path -Value $Value -OriginalCommand $originalSetContent
+                param([String[]]$Path, [Parameter(ValueFromPipeline = $true)][Object[]]$Value)
+                & $ProxySetContent -Path $Path -Value $Value -OriginalCommand $Global:originalSetContent
             }
             Set-Item -Path Function:Add-Content -Value {
-                param([String[]]$Path, [Object[]]$Value)
-                & $ProxyAddContent -Path $Path -Value $Value -OriginalCommand $originalAddContent
+                param([String[]]$Path, [Parameter(ValueFromPipeline = $true)][Object[]]$Value)
+                & $ProxyAddContent -Path $Path -Value $Value -OriginalCommand $Global:originalAddContent
             }
             Set-Item -Path Function:Clear-Content -Value {
                 param([String[]]$Path)
-                & $ProxyClearContent -Path $Path -OriginalCommand $originalClearContent
+                & $ProxyClearContent -Path $Path -OriginalCommand $Global:originalClearContent
             }
             Set-Item -Path Function:Remove-Item -Value {
-                param([String[]]$Path)
-                & $ProxyRemoveItem -Path $Path -OriginalCommand $originalRemoveItem
+                param([Parameter(ValueFromPipeline = $true)][String[]]$Path)
+                & $ProxyRemoveItem -Path $Path -OriginalCommand $Global:originalRemoveItem
             }
             Set-Item -Path Function:Copy-Item -Value {
-                param([String[]]$Path, [String]$Destination)
-                & $ProxyCopyItem -Path $Path -Destination $Destination -OriginalCommand $originalCopyItem
+                param([Parameter(ValueFromPipeline = $true)][String[]]$Path, [String]$Destination)
+                & $ProxyCopyItem -Path $Path -Destination $Destination -OriginalCommand $Global:originalCopyItem
             }
             Set-Item -Path Function:Move-Item -Value {
-                param([String[]]$Path, [String]$Destination)
-                & $ProxyMoveItem -Path $Path -Destination $Destination -OriginalCommand $originalMoveItem
+                param([Parameter(ValueFromPipeline = $true)][String[]]$Path, [String]$Destination)
+                & $ProxyMoveItem -Path $Path -Destination $Destination -OriginalCommand $Global:originalMoveItem
             }
             Set-Item -Path Function:New-Item -Value {
-                param([String[]]$Path)
-                & $ProxyNewItem -Path $Path -OriginalCommand $originalNewItem
-            }
-            Set-Item -Path Function:Get-ChildItem -Value {
-                param([String[]]$LiteralPath)
-                & $ProxyGetChildItem -LiteralPath $LiteralPath -OriginalCommand $originalGetChildItem
-            }
-            Set-Item -Path Function:Set-Location -Value {
-                param([String]$LiteralPath)
-                & $ProxySetLocation -LiteralPath $LiteralPath -OriginalCommand $originalSetLocation
+                param([Parameter(ValueFromPipeline = $true)][String[]]$Path)
+                & $ProxyNewItem -Path $Path -OriginalCommand $Global:originalNewItem
             }
             Set-Item -Path Function:Get-Item -Value {
                 param([String[]]$Path)
-                & $ProxyGetItem -Path $Path -OriginalCommand $originalGetItem
+                & $ProxyGetItem -Path $Path -OriginalCommand $Global:originalGetItem
             }
             Set-Item -Path Function:Get-ItemProperty -Value {
                 param([String[]]$LiteralPath)
-                & $ProxyGetItemProperty -LiteralPath $LiteralPath -OriginalCommand $originalGetItemProperty
+                & $ProxyGetItemProperty -LiteralPath $LiteralPath -OriginalCommand $Global:originalGetItemProperty
+            }
+            Set-Item -Path Function:Get-ChildItem -Value {
+                param([Parameter(ValueFromPipeline = $true)][String[]]$Path)
+                & $ProxyGetChildItem -Path $Path -OriginalCommand $Global:originalGetChildItem
+            }
+            Set-Item -Path Function:Set-Location -Value {
+                param([String]$LiteralPath)
+                & $ProxySetLocation -LiteralPath $LiteralPath -OriginalCommand $Global:originalSetlocation
             }
             Set-Item -Path Function:Out-File -Value {
-                param([String]$FilePath)
-                & $ProxyOutFile -FilePath $FilePath -OriginalCommand $originalOutFile
+                param([String]$FilePath, [Parameter(ValueFromPipeline = $true)][psobject]$InputObject)
+                & $ProxyOutFile -FilePath $FilePath -InputObject $InputObject -OriginalCommand $Global:originalOutFile
             }
             Set-Item -Path Function:Export-Csv -Value {
                 param([psobject]$InputObject, [String]$Path)
-                & $ProxyExportCsv -InputObject $InputObject -Path $Path -OriginalCommand $originalExportCsv
+                & $ProxyExportCsv -InputObject $InputObject -Path $Path -OriginalCommand $Global:originalExportCsv
             }
             Set-Item -Path Function:Import-Csv -Value {
                 param([String[]]$Path)
-                & $ProxyImportCsv -Path $Path -OriginalCommand $originalImportCsv
+                & $ProxyImportCsv -Path $Path -OriginalCommand $Global:originalImportCsv
             }
             Set-Item -Path Function:Import-Module -Value {
                 param([String[]]$Name)
-                & $ProxyImportModule -Name $Name -OriginalCommand $originalImportModule
+                & $ProxyImportModule -Name $Name -OriginalCommand $Global:originalImportModule
             }
 
-            Set-Item -Path Function:Add-Log -Value {
-                param([String]$Path, [String]$N, [String]$W, [String]$E)
-                & $ProxyAddLog -Path $Path -N $N -W $W -E $E -OriginalCommand $originalAddLog
+            Set-Item -Path Function:Add_Log -Value {
+                param([String]$Path, [switch]$N, [switch]$W, [switch]$E, [Parameter(ValueFromPipeline = $true)][String[]]$Message)
+                & $ProxyAddLog -Path $Path -N $N -W $W -E $E -Message $ Message -OriginalCommand $Global:originalAddLog
             }
-            Set-Item -Path Function:Read-Xml -Value {
-                param([String]$Path, [String]$id)
-                & $ProxyReadXml -Path $Path -id $id -OriginalCommand $originalReadXml
+            Set-Item -Path Function:Add_File -Value {
+                param([String]$Path, [String]$Encoding, [Parameter(ValueFromPipeline = $true)][String[]]$Message)
+                & $ProxyAddFile -Path $Path -Encoding $Encoding -Message $Message -OriginalCommand $Global:originalAddFile
+            }
+            Set-Item -Path Function:Read_Xml -Value {
+                param([String]$Path, [Parameter(ValueFromPipeline = $true)][String]$Key)
+                & $ProxyReadXml -Path $Path -Key $Key -OriginalCommand $Global:originalReadXml
             }
 
-            Write-Output "SimulationTest command substitution is successful."
+            Write-Output "---> SimulationTest command substitution is successful."
 
             # 全局变量
             [String[]]$Global:TruePaths = $T
-            "TruePaths : $TruePaths" | Write-Output
+            "---> SimulationTest truePaths : $TruePaths" | Write-Output
             [String[]]$Global:VirtualPaths = $V
-            "VirtualPaths : $VirtualPaths" | Write-Output
+            "---> SimulationTest virtualPaths : $VirtualPaths" | Write-Output
 
-            Write-Output "SimulationTest block invoke start."
-            & $SimulationBlock | Write-Output
-            # Write-Output "SimulationBlock return : $result"
-            Write-Output "SimulationTest block invoke over."
+            Write-Output "---> SimulationTest block invoke start."
+            Write-Output "***************************************"
+            $ReturnValue = & $SimulationBlock
+            Write-Output "---------------------------------------"
+            Write-Output "Return : [$ReturnValue]"
+            Write-Output "***************************************"
+            Write-Output "---> SimulationTest block invoke over."
         }
         catch {
-            Write-Output "SimulationTest - Simple error."
+            Write-Output "---> SimulationTest - Simple error."
             Write-Output $_.Exception.Message
         }
         finally {
-            Write-Output "SimulationTest - Simple end."
+            Write-Output "---> SimulationTest - Simple end."
         }
     }
 }
 
-$ChangePaths = {
+$Global:ChangePaths = {
     param(
         [String[]]$OldPaths
     )
@@ -168,7 +181,7 @@ $ChangePaths = {
     }
 }
 
-$ChangePath = {
+$Global:ChangePath = {
     param(
         [String]$OldPath
     )
@@ -185,7 +198,36 @@ $ChangePath = {
     }
 }
 
-$ProxyTestPath = {
+$Global:RecoveryPaths = {
+    param(
+        [String[]]$OldPaths
+    )
+    process {
+        for ([int]$i = 0; $i -lt $OldPaths.Length; $i++) {
+            $OldPaths[$i] = & $RecoveryPath -OldPath $OldPaths[$i]
+        }
+        return $OldPaths
+    }
+}
+
+$Global:RecoveryPath = {
+    param(
+        [String]$OldPath
+    )
+    process {
+        for ($i = 0; $i -lt $TruePaths.Length; $i++) {
+            if ($OldPath.StartsWith($TruePaths[$i])) {
+                # 只在匹配时输出一次新路径
+                [String]$NewPath = $OldPath -replace "^$([regex]::Escape($TruePaths[$i]))", $VirtualPaths[$i]
+                return $NewPath
+            }
+        }
+        # 如果没有匹配到，则返回原始路径
+        return $OldPath
+    }
+}
+
+$Global:ProxyTestPath = {
     param (
         [String[]]$Path,
         $OriginalCommand
@@ -202,7 +244,26 @@ $ProxyTestPath = {
     }
 }
 
-$ProxyGetContent = {
+$Global:ProxyJoinPath = {
+    param (
+        [String[]]$Path,
+        [String]$ChildPath,
+        $OriginalCommand
+    )
+    process {
+        try {
+            $N_Path = & $ChangePaths -OldPaths $Path
+            $result = & $OriginalCommand -Path $N_Path -ChildPath $ChildPath
+            $result = & $RecoveryPaths -OldPaths $result
+            return $result
+        }
+        catch {
+            Write-Error $_.Exception.Message
+        }
+    }
+}
+
+$Global:ProxyGetContent = {
     param (
         [string[]]$Path,
         $OriginalCommand
@@ -219,7 +280,7 @@ $ProxyGetContent = {
     }
 }
 
-$ProxySetContent = {
+$Global:ProxySetContent = {
     param (
         [string[]]$Path,
         [Object[]]$Value,
@@ -237,7 +298,7 @@ $ProxySetContent = {
     }
 }
 
-$ProxyAddContent = {
+$Global:ProxyAddContent = {
     param (
         [string[]]$Path,
         [Object[]]$Value,
@@ -255,7 +316,7 @@ $ProxyAddContent = {
     }
 }
 
-$ProxyClearContent = {
+$Global:ProxyClearContent = {
     param (
         [string[]]$Path,
         $OriginalCommand
@@ -272,7 +333,7 @@ $ProxyClearContent = {
     }
 }
 
-$ProxyRemoveItem = {
+$Global:ProxyRemoveItem = {
     param (
         [string[]]$Path,
         $OriginalCommand
@@ -289,7 +350,7 @@ $ProxyRemoveItem = {
     }
 }
 
-$ProxyCopyItem = {
+$Global:ProxyCopyItem = {
     param (
         [string[]]$Path,
         [String[]]$Destination,
@@ -307,7 +368,7 @@ $ProxyCopyItem = {
     }
 }
 
-$ProxyMoveItem = {
+$Global:ProxyMoveItem = {
     param (
         [string[]]$Path,
         [String[]]$Destination,
@@ -325,7 +386,7 @@ $ProxyMoveItem = {
     }
 }
 
-$ProxyNewItem = {
+$Global:ProxyNewItem = {
     param (
         [string[]]$Path,
         $OriginalCommand
@@ -342,7 +403,7 @@ $ProxyNewItem = {
     }
 }
 
-$ProxyGetChildItem = {
+$Global:ProxyGetItem = {
     param (
         [string[]]$Path,
         $OriginalCommand
@@ -359,41 +420,7 @@ $ProxyGetChildItem = {
     }
 }
 
-$ProxySetLocation = {
-    param (
-        [string]$LiteralPath,
-        $OriginalCommand
-    )
-    process {
-        try {
-            $N_Path = & $ChangePath -OldPath $LiteralPath
-            $result = & $OriginalCommand -LiteralPath $N_Path
-            return $result
-        }
-        catch {
-            Write-Error $_.Exception.Message
-        }
-    }
-}
-
-$ProxyGetItem = {
-    param (
-        [string[]]$Path,
-        $OriginalCommand
-    )
-    process {
-        try {
-            $N_Path = & $ChangePaths -OldPaths $Path
-            $result = & $OriginalCommand -Path $N_Path
-            return $result
-        }
-        catch {
-            Write-Error $_.Exception.Message
-        }
-    }
-}
-
-$ProxyGetItemProperty = {
+$Global:ProxyGetItemProperty = {
     param (
         [string[]]$LiteralPath,
         $OriginalCommand
@@ -410,15 +437,15 @@ $ProxyGetItemProperty = {
     }
 }
 
-$ProxyOutFile = {
+$Global:ProxyGetChildItem = {
     param (
-        [string]$FilePath,
+        [string[]]$Path,
         $OriginalCommand
     )
     process {
         try {
-            $N_Path = & $ChangePath -OldPath $FilePath
-            $result = & $OriginalCommand -FilePath $N_Path
+            $N_Path = & $ChangePaths -OldPaths $Path
+            $result = & $OriginalCommand -Path $N_Path
             return $result
         }
         catch {
@@ -427,7 +454,42 @@ $ProxyOutFile = {
     }
 }
 
-$ProxyExportCsv = {
+$Global:ProxySetLocation = {
+    param (
+        [string]$LiteralPath,
+        $OriginalCommand
+    )
+    process {
+        try {
+            $N_Path = & $ChangePath -OldPath $LiteralPath
+            $result = & $OriginalCommand -LiteralPath $N_Path
+            return $result
+        }
+        catch {
+            Write-Error $_.Exception.Message
+        }
+    }
+}
+
+$Global:ProxyOutFile = {
+    param (
+        [string]$FilePath,
+        [psobject]$InputObject,
+        $OriginalCommand
+    )
+    process {
+        try {
+            $N_Path = & $ChangePath -OldPath $FilePath
+            $result = & $OriginalCommand -FilePath $N_Path -InputObject $InputObject
+            return $result
+        }
+        catch {
+            Write-Error $_.Exception.Message
+        }
+    }
+}
+
+$Global:ProxyExportCsv = {
     param (
         [psobject]$InputObject,
         [String]$Path,
@@ -445,7 +507,7 @@ $ProxyExportCsv = {
     }
 }
 
-$ProxyImportCsv = {
+$Global:ProxyImportCsv = {
     param (
         [string[]]$Path,
         $OriginalCommand
@@ -462,7 +524,7 @@ $ProxyImportCsv = {
     }
 }
 
-$ProxyImportModule = {
+$Global:ProxyImportModule = {
     param (
         [string[]]$Name,
         $OriginalCommand
@@ -479,27 +541,29 @@ $ProxyImportModule = {
     }
 }
 
-$ProxyAddLog = {
+$Global:ProxyAddLog = {
     param (
         [string]$Path,
-        [String]$N,
-        [String]$W,
-        [String]$E,
+        [switch]$N,
+        [switch]$W,
+        [switch]$E,
+        [String[]]$Message,
         $OriginalCommand
     )
     process {
         try {
+            Write-Host "ProxyAddLog [Path] $Path"
             $N_Path = & $ChangePath -OldPath $Path
             if ($N) {
-                $result = & $OriginalCommand -Path $N_Path -N $N
+                $result = & $OriginalCommand -Path $N_Path -N -Message $Message
                 return $result
             }
             if ($W) {
-                $result = & $OriginalCommand -Path $N_Path -W $W
+                $result = & $OriginalCommand -Path $N_Path -W -Message $Message
                 return $result
             }
             if ($E) {
-                $result = & $OriginalCommand -Path $N_Path -E $E
+                $result = & $OriginalCommand -Path $N_Path -E -Message $Message
                 return $result
             }
         }
@@ -509,16 +573,39 @@ $ProxyAddLog = {
     }
 }
 
-$ProxyReadXml = {
+$Global:ProxyAddFile = {
     param (
         [string]$Path,
-        [String]$id,
+        [String]$Encoding,
+        [String[]]$Message,
         $OriginalCommand
     )
     process {
         try {
             $N_Path = & $ChangePath -OldPath $Path
-            $result = & $OriginalCommand -Name $N_Path -id $id
+            if ($Encoding) {
+                $result = & $OriginalCommand -Path $N_Path -Encoding $Encoding -Message $Message
+            } else {
+                $result = & $OriginalCommand -Path $N_Path -Message $Message
+            }
+            return $result
+        }
+        catch {
+            Write-Error $_.Exception.Message
+        }
+    }
+}
+
+$Global:ProxyReadXml = {
+    param (
+        [string]$Path,
+        [String]$Key,
+        $OriginalCommand
+    )
+    process {
+        try {
+            $N_Path = & $ChangePath -OldPath $Path
+            $result = & $OriginalCommand -Path $N_Path -Key $Key
             return $result
         }
         catch {

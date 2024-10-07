@@ -1,47 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
-    <Description id="LOG_PATH">
-        <Item>X:/opt/Scripts/Log</Item>
-        <!-- LOG_PATH -->
-    </Description>
-    <Description id="LOG_NAME">
-        <Item>APP.log</Item>
+    <Description Key="WORK_SPACE">
+        <Item>Y:\opt\WorkSpace</Item>
         <!-- LOG_NAME -->
     </Description>
-    <Description id="WORK_SPACE">
-        <Item>Y:/opt/WorkSpace</Item>
-        <!-- LOG_NAME -->
-    </Description>
-    <Description id="TEST_FILE_1">
+    <Description Key="TEST_FILE_1">
         <Item>Test_1.txt</Item>
         <!-- TEST_FILE_1 -->
     </Description>
-    <Description id="TEST_FILE_2">
+    <Description Key="TEST_FILE_2">
         <Item>Test_2.txt</Item>
         <!-- TEST_FILE_2 -->
     </Description>
-    <Description id="TEST_FILE_3">
+    <Description Key="TEST_FILE_3">
         <Item>Test_3.txt</Item>
         <!-- TEST_FILE_3 -->
     </Description>
-    <Description id="LIST_1">
-        <Item>Y:/opt/WorkSpace/11</Item>
-        <Item>Y:/opt/WorkSpace/12</Item>
-        <Item>Y:/opt/WorkSpace/13</Item>
-        <Item>Y:/opt/WorkSpace/14</Item>
-        <Item>Y:/opt/WorkSpace/15</Item>
-        <Item>Y:/opt/WorkSpace/16</Item>
-        <Item>Y:/opt/WorkSpace/17</Item>
+    <Description Key="LIST_1">
+        <Item>Y:\opt\WorkSpace\11</Item>
+        <Item>Y:\opt\WorkSpace\12</Item>
+        <Item>Y:\opt\WorkSpace\13</Item>
+        <Item>Y:\opt\WorkSpace\14</Item>
+        <Item>Y:\opt\WorkSpace\15</Item>
+        <Item>Y:\opt\WorkSpace\16</Item>
+        <Item>Y:\opt\WorkSpace\17</Item>
         <!-- LIST_1 -->
     </Description>
-    <Description id="LIST_2">
-        <Item>Y:/opt/WorkSpace/21</Item>
-        <Item>Y:/opt/WorkSpace/22</Item>
-        <Item>Y:/opt/WorkSpace/23</Item>
-        <Item>Y:/opt/WorkSpace/24</Item>
-        <Item>Y:/opt/WorkSpace/25</Item>
-        <Item>Y:/opt/WorkSpace/26</Item>
-        <Item>Y:/opt/WorkSpace/27</Item>
+    <Description Key="LIST_2">
+        <Item>Y:\opt\WorkSpace\21</Item>
+        <Item>Y:\opt\WorkSpace\22</Item>
+        <Item>Y:\opt\WorkSpace\23</Item>
+        <Item>Y:\opt\WorkSpace\24</Item>
+        <Item>Y:\opt\WorkSpace\25</Item>
+        <Item>Y:\opt\WorkSpace\26</Item>
+        <Item>Y:\opt\WorkSpace\27</Item>
         <!-- LIST_2 -->
     </Description>
 </root>

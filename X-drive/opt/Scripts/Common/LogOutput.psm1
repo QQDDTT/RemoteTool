@@ -1,77 +1,80 @@
-[String]$LogEncoding = "UTF-8"
-
 # ログを追加する関数
-function Add-Log {
+function Add_Log {
     param(
-        [String]$Path,  # ログファイルのパス
-        [Parameter(ParameterSetName = "INFO")][String]$N,  # INFOメッセージ
-        [Parameter(ParameterSetName = "WARNING")][String]$W,  # WARNINGメッセージ
-        [Parameter(ParameterSetName = "ERROR")][String]$E  # ERRORメッセージ
+        [String]$Path,     # ログファイルのパス
+        [switch]$N,        # INFO
+        [switch]$W,        # WARNING
+        [switch]$E,        # ERROR
+        [Parameter(ValueFromPipeline = $true)][String[]]$Message # メッセージ
     )
     process {
-        [String]$Date = Get-Date -Format "yyyyMMdd"  # 現在の日付を取得
-        $LogPath = $Path -replace "\.log$", "_$Date.log"  # 日付を含むログファイル名を作成
-        if (-not (Test-Path $LogPath)) {
-            New-Item -Path $LogPath -ItemType File -Force  # ファイルが存在しない場合、新しいファイルを作成
-        }
-        [String]$Time = Get-Date -Format "yyyy/MM/dd HH:mm:ss.fff"  # 現在の時間を取得
-
         try {
-            $encoding = [System.Text.Encoding]::GetEncoding($LogEncoding)  # エンコーディングを取得
-            # StreamWriterを使用してログに書き込む
-            $streamWriter = [System.IO.StreamWriter]::new($LogPath, $true, $encoding)  # trueは追加モードを示す
+
+            [String]$Date = Get-Date -Format "yyyyMMdd"  # 現在の日付を取得
+            $LogPath = $Path -replace "\.log$", "_$Date.log"  # 日付を含むログファイル名を作成
+
+            [String]$Time = Get-Date -Format "yyyy/MM/dd HH:mm:ss.fff"  # 現在の時間を取得
             
-            switch ($PSCmdlet.ParameterSetName) {
-                "INFO" { 
-                    $streamWriter.WriteLine("$Time [INFO] $N")  # INFOメッセージを書き込む
-                }
-                "WARNING" {
-                    $streamWriter.WriteLine("$Time [WARNING] $W")  # WARNINGメッセージを書き込む
-                }
-                "ERROR" {
-                    $streamWriter.WriteLine("$Time [ERROR] $E")  # ERRORメッセージを書き込む
-                }
-                Default {
-                    $streamWriter.WriteLine("$Time [INFO]")  # デフォルトはINFOレベル
+            if ($N) {
+                [String]$Left = "$Time [INFO] "
+                [String]$Spaces = "                               "
+            }
+            if ($W) {
+                [String]$Left = "$Time [WARNING] "
+                [String]$Spaces = "                                  "
+            }
+            if ($E) {
+                [String]$Left = "$Time [ERROR] "
+                [String]$Spaces = "                                "
+            }
+            for ([int]$i = 0; $i -lt $Message.Length; $i++) {
+                if ($i -eq 0) {
+                    $Message[$i] = "$Left$Message[$i]"
+                } else {
+                    $Message[$i] = "$Spaces$Message[$i]"
                 }
             }
-            $streamWriter.Close()  # StreamWriterを閉じる
+            Add_File -Path $LogPath -Message $Message
         } catch {
-            Write-Warning "Failed to write to log file after $maxRetries attempts."  # 警告を表示
+            Write-Error "[ERROR] Log File : $Path can not write."
+        } finally {
+            $streamWriter.Close()  # StreamWriterを閉じる
         }
     }
 }
 
-# スレッドセーフなログを追加する関数
-function Add-SafeLog {
-    param(
-        [String]$Path,  # ログファイルのパス
-        [Parameter(ParameterSetName = "INFO")][String]$N,  # INFOメッセージ
-        [Parameter(ParameterSetName = "WARNING")][String]$W,  # WARNINGメッセージ
-        [Parameter(ParameterSetName = "ERROR")][String]$E  # ERRORメッセージ
+function Add_File {
+    param (
+        [String]$Path,
+        [String]$Encoding = "UTF-8",
+        [Parameter(ValueFromPipeline = $true)][String[]]$Message
     )
+    process {
+        try {
+            # ファイル追加をスレッドセーフにするためのロックオブジェクト
+            $script:LogLock = New-Object System.Object
 
-    # ログ追加をスレッドセーフにするためのロックオブジェクト
-    $script:LogLock = New-Object System.Object
+            # ロックを使用して、ファイルへの書き込みを同期化
+            [System.Threading.Monitor]::Enter($LogLock)
 
-    # ロックを使用して、ログへの書き込みを同期化
-    [System.Threading.Monitor]::Enter($LogLock)
-    try {
-        switch ($PSCmdlet.ParameterSetName) {
-            "INFO" { 
-                Add-Log -Path $Path -N $N  # INFOメッセージを書き込む
+            if (-not [System.IO.File]::Exists($LogPath)) {
+                Write-Warning "File : [$Path] is not exist. Creating..."
+                $fileStream = [System.IO.File]::Create($filePath)
+                $fileStream.Close()
             }
-            "WARNING" {
-                Add-Log -Path $Path -W $W # WARNINGメッセージを書き込む
+    
+            $encoding = [System.Text.Encoding]::GetEncoding($Encoding)  # エンコーディングを取得
+            # StreamWriterを使用してファイルに書き込む
+            $streamWriter = [System.IO.StreamWriter]::new($LogPath, $true, $encoding)  # trueは追加モードを示す
+            
+            $Message | ForEach-Object {
+                $streamWriter.WriteLine($_)  # メッセージを書き込む
             }
-            "ERROR" {
-                Add-Log -Path $Path -E $E  # ERRORメッセージを書き込む
-            }
-            Default {
-                Add-Log -Path $Path -N $N  # デフォルトはINFOレベル
-            }
+        } catch {
+            Write-Error "[ERROR] File : $Path can not write."
+        } finally {
+            $streamWriter.Close()  # StreamWriterを閉じる
+            [System.Threading.Monitor]::Exit($LogLock)
         }
-    } finally {
-        [System.Threading.Monitor]::Exit($LogLock)
     }
 }

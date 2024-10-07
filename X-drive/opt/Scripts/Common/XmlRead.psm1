@@ -1,9 +1,9 @@
 [String]$XmlEncoding = "UTF-8"
 # 通过io.stream获取xml文件信息
-function Read-Xml {
+function Read_Xml {
     param(
         [String]$Path,
-        [Parameter(ValueFromPipeline = $true)][String]$id # 非必选参数
+        [Parameter(ValueFromPipeline = $true)][String]$Key # 非必选参数
     )
     process {
         try {
@@ -12,10 +12,10 @@ function Read-Xml {
             $reader = [System.IO.StreamReader]::new($Path, $encoding)
             [xml]$xmlData = $reader.ReadToEnd()
             # 使用 SelectNodes 进行查询
-            $nodes = $xmlData.SelectNodes("//*[@id = '$id']")
+            $nodes = $xmlData.SelectNodes("//*[@Key = '$Key']")
             return $nodes | Get-EndNode | ForEach-Object { $_.InnerText } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
         } catch {
-            Add-Log "E" $_.Exception.Message
+            Write-Error $_.Exception.Message
         } finally {
             $reader.Close()
         }
