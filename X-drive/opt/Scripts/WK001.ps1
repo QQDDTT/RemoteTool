@@ -17,8 +17,8 @@ try{
         [String]$Test1 = Read_Xml -Path $Xml_Path -Key "TEST_FILE_1" 
         [String]$Test2 = Read_Xml -Path $Xml_Path -Key "TEST_FILE_2"
         [String]$Test3 = Read_Xml -Path $Xml_Path -Key "TEST_FILE_3"
-        [String]$List1 = Read_Xml -Path $Xml_Path -Key "LIST_1"
-        [String]$List2 = Read_Xml -Path $Xml_Path -Key "LIST_2"
+        [String[]]$List1 = Read_Xml -Path $Xml_Path -Key "LIST_1"
+        [String[]]$List2 = Read_Xml -Path $Xml_Path -Key "LIST_2"
     } else {
         $result = 5
         return $result
@@ -28,42 +28,46 @@ try{
     $Path2 = Join-Path -Path $WorkSpace -ChildPath $Test2
     $Path3 = Join-Path -Path $WorkSpace -ChildPath $Test3
 
-    # if (Test-Path $Path1) {
-    #     Add-Content -Path $Path1 -Value "*** LIST 1 ***"
-    #     $List1 | ForEach-Object {
-    #         Add-Content -Path $Path1 -Value $_
-    #     }
-    # } else {
-    #     $result = 1
-    #     "$Path1 NOT FOUND" | Add_Log -W -Path $Log_Path
-    # }
+    New-Item -Path $Path1
+    New-Item -Path $Path2
+    New-Item -Path $Path3
 
-    # if (Test-Path $Path2) {
-    #     Add-Content -Path $Path2 -Value "*** LIST 2 ***"
-    #     $List2 | ForEach-Object {
-    #         Add-Content -Path $Path2 -Value $_
-    #     }
-    # } else {
-    #     $result = 1
-    #     "$Path2 NOT FOUND" | Add_Log -W -Path $Log_Path
-    # }
+    if (Test-Path $Path1) {
+        Add-Content -Path $Path1 -Value "*** LIST 1 ***"
+        foreach ($l1 in $List1) {
+            Add-Content -Path $Path1 -Value $l1
+        }
+    } else {
+        $result = 1
+        "$Path1 NOT FOUND" | Add_Log -W -Path $Log_Path
+    }
 
-    # if (Test-Path $Path3) {
-    #     Add-Content -Path $Path3 -Value "*** LIST 1 & 2 ***"
-    #     $List1 | ForEach-Object {
-    #         Add-Content -Path $Path3 -Value $_
-    #     }
-    #     $List2 | ForEach-Object {
-    #         Add-Content -Path $Path3 -Value $_
-    #     }
-    # } else {
-    #     $result = 1
-    #     "$Path3 NOT FOUND" | Add_Log -W -Path $Log_Path
-    # }
+    if (Test-Path $Path2) {
+        Add-Content -Path $Path2 -Value "*** LIST 2 ***"
+        foreach ($l2 in $List2) {
+            Add-Content -Path $Path2 -Value $l2
+        }
+    } else {
+        $result = 1
+        "$Path2 NOT FOUND" | Add_Log -W -Path $Log_Path
+    }
+
+    if (Test-Path $Path3) {
+        Add-Content -Path $Path3 -Value "*** LIST 1 & 2 ***"
+        foreach ($l1 in $List1) {
+            Add-Content -Path $Path3 -Value $l1
+        }
+        foreach ($l2 in $List2) {
+            Add-Content -Path $Path3 -Value $l2
+        }
+    } else {
+        $result = 1
+        "$Path3 NOT FOUND" | Add_Log -W -Path $Log_Path
+    }
     return $result
 } catch {
     $result = 5
-    "ERROR ${_.Exception.Message}" | Add_Log -E -Path $Log_Path
+    "ERROR " + $_.Exception | Add_Log -E -Path $Log_Path
     return $result
 } finally {
     switch ($result) {
