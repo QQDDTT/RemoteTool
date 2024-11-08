@@ -123,13 +123,13 @@ $Global:originalGetProcess = Get-Command Get-Process # 查看当前正在运行�
 $Global:originalStopProcess = Get-Command Stop-Process # 终止指定的进程
 $Global:originalGetService = Get-Command Get-Service # 列出系统中的所有服务及其状态
 $Global:originalStartService = Get-Command Start-Service # 启动指定的服务
+$Global:originalStopService = Get-Command Stop-Service # 停止指定的服务
+$Global:originalGetEventLog = Get-Command Get-EventLog # 查看系统事件日志
+$Global:originalGetAlias = Get-Command Get-Alias # 获取命令的别名或查看所有可用别名
+$Global:originalMeasureObject = Get-Command Measure-Object # 计算对象的数量、最小值、最大值、平均值等
+$Global:originalSelectObject = Get-Command Select-Object # 选择对象的特定属性
+$Global:originalWhereObject = Get-Command Where-Object # 根据条件过滤对象
 
-# $Global:originalStopService = Get-Command Stop-Service # 停止指定的服务
-# $Global:originalGetEventLog = Get-Command Get-EventLog # 查看系统事件日志
-# $Global:originalGetAlias = Get-Command Get-Alias # 获取命令的别名或查看所有可用别名
-# $Global:originalMeasureObject = Get-Command Measure-Object # 计算对象的数量、最小值、最大值、平均值等
-# $Global:originalSelectObject = Get-Command Select-Object # 选择对象的特定属性
-# $Global:originalWhereObject = Get-Command Where-Object # 根据条件过滤对象
 # $Global:originalSortObject = Get-Command Sort-Object # 对对象进行排序
 # $Global:originalForEachObject = Get-Command ForEach-Object
 # $Global:originalStartJob = Get-Command Start-Job # 启动后台作业，异步执行任务
@@ -407,42 +407,78 @@ Set-Item -Path Function:Get-Service -Value {
 }
 Set-Item -Path Function:Start-Service -Value {
     param (
-        [String[]]$Name,
-        [ServiceController[]]$InputObject
+        [Parameter(Mandatory = $false)][String[]]$Name,
+        [Parameter(Mandatory = $false)][ServiceController[]]$InputObject
     )
     PrintConsole -Status "RUNNING" -Cmd "Start-Service" -Keys @("Name", "InputObject") -Values @($Name, $InputObject)
     & $ProxyStartService -OriginalCommand $Global:originalStartService -Name $Name -InputObject $InputObject
 }
-# Set-Item -Path Function:Stop-Service -Value {
-#         param (
-        
-#     )
-# }
-# Set-Item -Path Function:Get-EventLog -Value {
-#     param (
-        
-#     )
-# }
-# Set-Item -Path Function:Get-Alias -Value {
-#     param (
-        
-#     )
-# }
-# Set-Item -Path Function:Measure-Object -Value {
-#     param (
-        
-#     )
-# }
-# Set-Item -Path Function:Select-Object -Value {
-#     param (
-        
-#     )
-# }
-# Set-Item -Path Function:Where-Object -Value {
-#     param (
-        
-#     )
-# }
+Set-Item -Path Function:Stop-Service -Value {
+    param (
+        [Parameter(Mandatory = $false)][String[]]$Name,
+        [Parameter(Mandatory = $false)][ServiceController[]]$InputObject
+    )
+    PrintConsole -Status "RUNNING" -Cmd "Stop-Service" -Keys @("Name", "InputObject") -Values @($Name, $InputObject)
+    & $ProxyStopService -OriginalCommand $Global:originalStopService -Name $Name -InputObject $InputObject
+}
+Set-Item -Path Function:Get-EventLog -Value {
+    param (
+        [String]$LogName,
+        [Parameter(Mandatory = $false)][long[]]$InstanceId,
+        [Parameter(Mandatory = $false)][String[]]$ComputerName
+    )
+    PrintConsole -Status "RUNNING" -Cmd "Get-EventLog" -Keys @("LogName", "InputObject", "ComputerName") -Values @($LogName, $InputObject, $ComputerName)
+    $result = & $ProxyGetEventLog -OriginalCommand $Global:originalGetEventLog -LogName $LogName -InputObject $InputObject -ComputerName $ComputerName
+    PrintConsole -Status "RUNNING" -Cmd "Get-Service" -Keys @("RETURN") -Values @($result)
+    return $result
+}
+Set-Item -Path Function:Get-Alias -Value {
+    param (
+        [Parameter(Mandatory = $false)][String[]]$Name,
+        [switch]$Force
+    )
+    PrintConsole -Status "RUNNING" -Cmd "Get-Alias" -Keys @("Name", "Force") -Values @($Name, $Force)
+    $result = & $ProxyGetAlias -OriginalCommand $Global:originalGetAlias -Name $Name -Force $Force
+    PrintConsole -Status "RUNNING" -Cmd "Get-Alias" -Keys @("RETURN") -Values @($result)
+    return $result
+}
+Set-Item -Path Function:Measure-Object -Value {
+    param (
+        [Parameter(Mandatory = $false)][String[]]$Property,
+        [Parameter(ValueFromPipeline = $true, Mandatory = $false)][psobject]$InputObject,
+        [switch]$Sum,
+        [switch]$Average,
+        [switch]$Maximum,
+        [switch]$Minimum
+    )
+    PrintConsole -Status "RUNNING" -Cmd "Measure-Object" -Keys @("Property", "InputObject", "Sum", "Average", "Maximum", "Minimum") -Values @($Property, $InputObject, $Sum, $Average, $Maximum, $Minimum)
+    $result = & $ProxyMeasureObject -OriginalCommand $Global:originalMeasureObject -Property $Property -InputObject $InputObject -Sum $Sum -Average $Average -Maximum $Maximum -Minimum $Minimum
+    PrintConsole -Status "RUNNING" -Cmd "Measure-Object" -Keys @("RETURN") -Values @($result)
+    return $result
+}
+Set-Item -Path Function:Select-Object -Value {
+    param (
+        [Parameter(Mandatory = $false)][String[]]$Property,
+        [Parameter(ValueFromPipeline = $true, Mandatory = $false)][psobject]$InputObject,
+        [switch]$Unique
+    )
+    PrintConsole -Status "RUNNING" -Cmd "Select-Object" -Keys @("Property", "InputObject", "Unique") -Values @($Property, $InputObject, $Unique)
+    $result = & $ProxySelectObject -OriginalCommand $Global:originalSelectObject -Property $Property -InputObject $InputObject -Unique $Unique
+    PrintConsole -Status "RUNNING" -Cmd "Select-Object" -Keys @("RETURN") -Values @($result)
+    return $result
+}
+Set-Item -Path Function:Where-Object -Value {
+    param (
+        [String]$Property,
+        [Object]$Value,
+        [psobject]$InputObject
+    )
+    Where-Object
+    PrintConsole -Status "RUNNING" -Cmd "Where-Object" -Keys @("Property", "InputObject", "Unique") -Values @($Property, $InputObject, $Unique)
+    $result = & $ProxySelectObject -OriginalCommand $Global:originalSelectObject -Property $Property -InputObject $InputObject -Unique $Unique
+    PrintConsole -Status "RUNNING" -Cmd "Where-Object" -Keys @("RETURN") -Values @($result)
+    return $result
+}
 # Set-Item -Path Function:Sort-Object -Value {
 #     param (
         
@@ -1129,70 +1165,177 @@ $Global:ProxyStartService = {
     }
 }
 
-# $Global:ProxyStopService = {
-#     param (
+$Global:ProxyStopService = {
+    param (
+        [String[]]$Name,
+        [ServiceController[]]$InputObject,
+        $OriginalCommand
+    )
+    process {
+        try {
+            if ($Name) {
+                $result = & $OriginalCommand -Name $Name
+            } elseif ($InputObject) {
+                $result = & $OriginalCommand -InputObject $InputObject
+            }
+            return $result
+        } catch {
+            PrintConsole -Status "ERROR" -Errors $_.Exception
+        }
+    }
+}
 
-#     )
-#     process {
-#         try {
+$Global:ProxyGetEventLog = {
+    param (
+        [String]$LogName,
+        $InstanceId,
+        $ComputerName,
+        $OriginalCommand
+    )
+    process {
+        try {
+            if ($InstanceId -and $ComputerName) {
+                $result = & $OriginalCommand -LogName $LogName -InstanceId $InstanceId -ComputerName $ComputerName
+            } elseif ($InstanceId) {
+                $result = & $OriginalCommand -LogName $LogName -InstanceId $InstanceId
+            } elseif ($ComputerName) {
+                $result = & $OriginalCommand -LogName $LogName -ComputerName $ComputerName
+            } else {
+                $result = & $OriginalCommand -LogName $LogName 
+            }
+            return $result
+        } catch {
+            PrintConsole -Status "ERROR" -Errors $_.Exception
+        }
+    }
+}
 
-#         } catch {
-#             PrintConsole -Status "ERROR" -Errors $_.Exception
-#         }
-#     }
-# }
+$Global:ProxyGetAlias = {
+    param (
+        $Name,
+        $Force,
+        $OriginalCommand
+    )
+    process {
+        try {
+            if ($Name -and $Force) {
+                $result = & $OriginalCommand -Name $Name -Force
+            } elseif ($Name) {
+                $result = & $OriginalCommand -Name $Name
+            } elseif ($Force) {
+                $result = & $OriginalCommand -Force
+            } else {
+                $result = & $OriginalCommand
+            }
+            return $result
+        } catch {
+            PrintConsole -Status "ERROR" -Errors $_.Exception
+        }
+    }
+}
 
-# $Global:ProxyGetEventLog = {
-#     param (
+$Global:ProxyMeasureObject = {
+    param (
+        $Property,
+        $InputObject,
+        $Sum,
+        $Average,
+        $Maximum,
+        $Minimum,
+        $OriginalCommand
+    )
+    process {
+        try {
+            if ($Sum) {
+                if ($Property -and $InputObject) {
+                    $result = & $OriginalCommand -Property $Property -InputObject $InputObject -Sum
+                } elseif ($Property) {
+                    $result = & $OriginalCommand -Property $Property -Sum
+                } elseif ($InputObject) {
+                    $result = & $OriginalCommand -InputObject $InputObject -Sum
+                } else {
+                    $result = & $OriginalCommand -Sum
+                }
+            } elseif ($Average) {
+                if ($Property -and $InputObject) {
+                    $result = & $OriginalCommand -Property $Property -InputObject $InputObject -Average
+                } elseif ($Property) {
+                    $result = & $OriginalCommand -Property $Property -Average
+                } elseif ($InputObject) {
+                    $result = & $OriginalCommand -InputObject $InputObject -Average
+                } else {
+                    $result = & $OriginalCommand -Average
+                }
+            } elseif ($Maximum) {
+                if ($Property -and $InputObject) {
+                    $result = & $OriginalCommand -Property $Property -InputObject $InputObject -Maximum
+                } elseif ($Property) {
+                    $result = & $OriginalCommand -Property $Property -Maximum
+                } elseif ($InputObject) {
+                    $result = & $OriginalCommand -InputObject $InputObject -Maximum
+                } else {
+                    $result = & $OriginalCommand -Maximum
+                }
+            } elseif ($Minimum) {
+                if ($Property -and $InputObject) {
+                    $result = & $OriginalCommand -Property $Property -InputObject $InputObject -Minimum
+                } elseif ($Property) {
+                    $result = & $OriginalCommand -Property $Property -Minimum
+                } elseif ($InputObject) {
+                    $result = & $OriginalCommand -InputObject $InputObject -Minimum
+                } else {
+                    $result = & $OriginalCommand -Minimum
+                }
+            } elser {
+                if ($Property -and $InputObject) {
+                    $result = & $OriginalCommand -Property $Property -InputObject $InputObject
+                } elseif ($Property) {
+                    $result = & $OriginalCommand -Property $Property
+                } elseif ($InputObject) {
+                    $result = & $OriginalCommand -InputObject $InputObject
+                } else {
+                    $result = & $OriginalCommand
+                }
+            }
+            return $result
+        } catch {
+            PrintConsole -Status "ERROR" -Errors $_.Exception
+        }
+    }
+}
 
-#     )
-#     process {
-#         try {
-
-#         } catch {
-#             PrintConsole -Status "ERROR" -Errors $_.Exception
-#         }
-#     }
-# }
-
-# $Global:ProxyGetAlias = {
-#     param (
-
-#     )
-#     process {
-#         try {
-
-#         } catch {
-#             PrintConsole -Status "ERROR" -Errors $_.Exception
-#         }
-#     }
-# }
-
-# $Global:ProxyMeasureObject = {
-#     param (
-
-#     )
-#     process {
-#         try {
-
-#         } catch {
-#             PrintConsole -Status "ERROR" -Errors $_.Exception
-#         }
-#     }
-# }
-
-# $Global:ProxySelectObject = {
-#     param (
-
-#     )
-#     process {
-#         try {
-
-#         } catch {
-#             PrintConsole -Status "ERROR" -Errors $_.Exception
-#         }
-#     }
-# }
+$Global:ProxySelectObject = {
+    param (
+        $Property,
+        $InputObject,
+        $Unique,
+        $OriginalCommand
+    )
+    process {
+        try {
+            if ($Unique) {
+                if ($Property -and $InputObject) {
+                    $result = & $OriginalCommand -Property $Property -InputObject $InputObject -Unique
+                } elseif ($Property) {
+                    $result = & $OriginalCommand -Property $Property -Unique
+                } elseif ($InputObject) {
+                    $result = & $OriginalCommand -InputObject $InputObject -Unique
+                }
+            } else {
+                if ($Property -and $InputObject) {
+                    $result = & $OriginalCommand -Property $Property -InputObject $InputObject
+                } elseif ($Property) {
+                    $result = & $OriginalCommand -Property $Property
+                } elseif ($InputObject) {
+                    $result = & $OriginalCommand -InputObject $InputObject
+                }
+            }
+            return $result
+        } catch {
+            PrintConsole -Status "ERROR" -Errors $_.Exception
+        }
+    }
+}
 
 # $Global:ProxyWhereObject = {
 #     param (

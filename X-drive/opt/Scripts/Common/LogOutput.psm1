@@ -43,41 +43,35 @@ function Global:Add_Log {
 function Global:Add_File {
     param (
         [String]$Path,
-        [switch]$Append,
-        [Parameter(ValueFromPipeline = $true)][String[]]$Content
+        [Parameter(ValueFromPipeline = $true)][String[]]$Content,
+        [String]$Encoding = "UTF-8"
     )
     process {
         try {
-            # ファイル追加をスレッドセーフにするためのロックオブジェクト
-            # $script:LogLock = New-Object System.Object
-
-            # ロックを使用して、ファイルへの書き込みを同期化
-            # [System.Threading.Monitor]::Enter($LogLock)
+            $parent_path = [System.IO.Path]::GetDirectoryName($Path)
+            if (-not [System.IO.Directory]::Exists($parent_path)) {
+                [System.IO.Directory]::CreateDirectory($parent_path) | Out-Null
+                $host.UI.WriteLine("Directory : [$parent_path] does not exist. Creating...")
+            }
 
             if (-not [System.IO.File]::Exists($Path)) {
-                Write-Warning "File : [$Path] is not exist. Creating..."
-                $fileStream = [System.IO.File]::Create($Path)
-                $fileStream.Close()
+                [System.IO.File]::WriteAllText($Path, '', [System.Text.Encoding]::GetEncoding($Encoding))
+                $host.UI.WriteLine("File : [$Path] does not exist. Creating...")
             }
-    
-            $encoding = [System.Text.Encoding]::GetEncoding($Encoding)  # エンコーディングを取得
-            # StreamWriterを使用してファイルに書き込む
-            if ($Append) {
-                $streamWriter = [System.IO.StreamWriter]::new($Path, $true)
-            } else {
-                $streamWriter = [System.IO.StreamWriter]::new($Path, $false) 
-            }
+
+            $streamWriter = [System.IO.StreamWriter]::new($Path, $true, [System.Text.Encoding]::GetEncoding($Encoding))
             $Content | ForEach-Object {
                 $streamWriter.WriteLine($_)
             }
         } catch {
-            Write-Error "[ERROR] File : $Path can not write."
-            Write-Error $_.Exception
+            $host.UI.RawUI.ForegroundColor = "Red"
+            $host.UI.WriteLine("[ERROR] File : $Path cannot be written.")
+            $host.UI.WriteLine($_)
+            $host.UI.RawUI.ForegroundColor = "White"
         } finally {
             if ($null -ne $streamWriter) {
                 $streamWriter.Close()
             }
-            # [System.Threading.Monitor]::Exit($LogLock)
         }
     }
 }
